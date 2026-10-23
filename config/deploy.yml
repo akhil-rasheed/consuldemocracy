@@ -1,0 +1,52 @@
+service: consul-demo
+image: akhilrasheed/consuldemo
+ssh:
+  user: ubuntu
+  keys:
+    - ~/.ssh/ssh-key-2026-10-23.key
+servers:
+  web:
+    - 130.162.44.206
+
+registry:
+  username: akhilrasheed
+  password:
+    - KAMAL_REGISTRY_PASSWORD
+
+builder:
+  arch: arm64
+  dockerfile: Dockerfile.production
+  context: .
+
+proxy:
+  host: consuldemo.akhilrasheed.com
+  ssl: true
+  app_port: 3000
+  forward_headers: true
+
+env:
+  clear:
+    RAILS_ENV: production
+    RACK_ENV: production
+    RAILS_SERVE_STATIC_FILES: "true"
+    DB_HOST: consul-demo-db
+    PGUSER: consul
+    PGDATABASE: consul_development
+  secret:
+    - SECRET_KEY_BASE
+    - PGPASSWORD
+
+accessories:
+  db:
+    image: postgres:16
+    host: 130.162.44.206
+    env:
+      clear:
+        POSTGRES_USER: consul
+        POSTGRES_DB: consul_production
+      secret:
+        - POSTGRES_PASSWORD
+    directories:
+      - consul_postgres_data:/var/lib/postgresql/data
+    options:
+      restart: unless-stopped
