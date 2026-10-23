@@ -1,0 +1,85 @@
+# syntax=docker/dockerfile:1
+
+#TODO: get node and ruby version from the environment
+FROM node:22.23.3-trixie AS node
+
+FROM ruby:3.4.11-trixie AS build
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    RAILS_ROOT=/var/www/consul \
+    BUNDLE_PATH=/usr/local/bundle \
+    BUNDLE_WITHOUT="development:test" \
+    BUNDLE_DEPLOYMENT=1
+
+WORKDIR $RAILS_ROOT
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    cmake \
+    git \
+    libpq-dev \
+    pkg-config \
+    imagemagick \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=node /usr/local/bin/node /usr/local/bin/node
+COPY --from=node /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/npm
+RUN ln -s /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm
+
+COPY Gemfile Gemfile.lock Gemfile_custom ./
+COPY .ruby-version ./
+RUN bundle install
+
+COPY package.json package-lock.json ./
+RUN npm ci
+
+COPY . .
+
+ENV RAILS_ENV=production \
+    RACK_ENV=production
+
+RUN cp config/database.yml.example config/database.yml
+
+RUN APARTMENT_DISABLE_INIT=true \
+    SECRET_KEY_BASE_DUMMY=1 \
+    bundle exec rails assets:precompile
+
+RUN npm prune --omit=dev
+
+
+FROM ruby:3.4.11-trixie AS production
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    RAILS_ROOT=/var/www/consul \
+    BUNDLE_PATH=/usr/local/bundle \
+    BUNDLE_WITHOUT="development:test" \
+    BUNDLE_DEPLOYMENT=1 \
+    RAILS_ENV=production \
+    RACK_ENV=production \
+    RAILS_SERVE_STATIC_FILES=true
+
+WORKDIR $RAILS_ROOT
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    imagemagick \
+    libpq5 \
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd --system app \
+    && useradd --system --gid app --home-dir $RAILS_ROOT app \
+    && mkdir -p tmp/pids tmp/cache log storage \
+    && chown -R app:app $RAILS_ROOT
+
+COPY --from=node /usr/local/bin/node /usr/local/bin/node
+COPY --from=node /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/npm
+RUN ln -s /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm
+
+COPY --from=build /usr/local/bundle /usr/local/bundle
+COPY --from=build --chown=app:app $RAILS_ROOT $RAILS_ROOT
+
+USER app
+
+EXPOSE 3000
+
+ENTRYPOINT []
+
+CMD ["bundle", "exec", "rails", "server", "-b", "0.0.0.0", "-p", "3000"]
