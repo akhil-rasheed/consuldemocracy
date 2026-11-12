@@ -200,7 +200,6 @@ namespace :admin do
           resources :videos, controller: "questions/options/videos", shallow: false
           resources :documents, only: [:index, :create], controller: "questions/options/documents"
         end
-        post "/options/order_options", to: "questions/options#order_options"
       end
 
       resource :active_polls, only: [:create, :edit, :update]
@@ -298,11 +297,6 @@ namespace :admin do
     resources :local_census_records
     namespace :local_census_records do
       resources :imports, only: [:new, :create, :show]
-    end
-
-    resource :machine_learning, controller: :machine_learning, only: [:show] do
-      post :execute, on: :collection
-      delete :cancel, on: :collection
     end
 
     namespace :cookies do

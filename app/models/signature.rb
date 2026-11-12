@@ -7,7 +7,7 @@ class Signature < ApplicationRecord
   validates :postal_code, presence: true, if: -> { Setting.force_presence_postal_code? }
   validates :signature_sheet, presence: true
 
-  normalizes :document_number, with: ->(document_number) { document_number.gsub(/[^a-z0-9]+/i, "").upcase }
+  normalizes :document_number, with: DocumentNumberNormalizer
 
   scope :verified,   -> { where(verified: true) }
   scope :unverified, -> { where(verified: false) }
@@ -27,13 +27,16 @@ class Signature < ApplicationRecord
 
   def assign_vote_to_user
     set_user
-    user.with_lock do
-      if signable.is_a? Budget::Investment
+
+    if signable.is_a? Budget::Investment
+      user.with_lock do
         if [nil, :no_selecting_allowed].include?(signable.reason_for_not_being_selectable_by(user))
           signable.vote_by(voter: user, vote: "yes")
           assign_signature_to_vote
         end
-      else
+      end
+    else
+      transaction do
         signable.register_vote(user, "yes")
         assign_signature_to_vote
       end

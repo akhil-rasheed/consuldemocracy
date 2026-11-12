@@ -12,10 +12,10 @@ class Budget
     include Mappable
     include Documentable
     include SDG::Relatable
+    include Votable
     include HasPublicAuthor
 
     acts_as_taggable_on :valuation_tags
-    acts_as_votable
     acts_as_paranoid column: :hidden_at
     include ActsAsParanoidAliases
     include Relationable
@@ -49,7 +49,6 @@ class Budget
     has_many :valuator_groups, through: :valuator_group_assignments
 
     has_many :comments, -> { where(valuation: false) }, as: :commentable, inverse_of: :commentable
-    has_one :summary_comment, as: :commentable, class_name: "MlSummaryComment", dependent: :destroy
     has_many :valuations, -> { where(valuation: true) },
              as: :commentable,
              inverse_of: :commentable,
@@ -314,7 +313,7 @@ class Budget
     end
 
     def register_selection(user)
-      user.with_lock { vote_by(voter: user, vote: "yes") } if selectable_by?(user)
+      user.with_lock { vote_by(voter: user, vote: "yes") if selectable_by?(user) }
     end
 
     def calculate_confidence_score

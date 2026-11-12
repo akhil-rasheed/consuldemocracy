@@ -10,11 +10,11 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_28_184039) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_06_212245) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
-  enable_extension "pg_trgm"
-  enable_extension "unaccent"
+  enable_extension "shared_extensions.pg_trgm"
+  enable_extension "shared_extensions.unaccent"
 
   create_table "active_poll_translations", id: :serial, force: :cascade do |t|
     t.integer "active_poll_id", null: false
@@ -1111,7 +1111,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_28_184039) do
 
   create_table "poll_question_answers", id: :serial, force: :cascade do |t|
     t.integer "question_id"
-    t.integer "given_order", default: 1
+    t.integer "given_order"
     t.boolean "most_voted", default: false
     t.boolean "allow_custom_text", default: false
     t.index ["question_id"], name: "index_poll_question_answers_on_question_id"
@@ -1720,6 +1720,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_28_184039) do
     t.integer "signature_id"
     t.index ["signature_id"], name: "index_votes_on_signature_id"
     t.index ["votable_id", "votable_type", "vote_scope"], name: "index_votes_on_votable_id_and_votable_type_and_vote_scope"
+    t.index ["votable_id", "votable_type", "voter_id", "voter_type"], name: "idx_on_votable_id_votable_type_voter_id_voter_type_8483770159", unique: true, where: "(vote_scope IS NULL)"
     t.index ["voter_id", "voter_type", "vote_scope"], name: "index_votes_on_voter_id_and_voter_type_and_vote_scope"
   end
 
@@ -1785,7 +1786,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_28_184039) do
   add_foreign_key "legislation_draft_versions", "legislation_processes"
   add_foreign_key "legislation_proposals", "legislation_processes"
   add_foreign_key "locks", "users"
-  add_foreign_key "machine_learning_jobs", "users"
   add_foreign_key "managers", "users"
   add_foreign_key "moderators", "users"
   add_foreign_key "notifications", "users"

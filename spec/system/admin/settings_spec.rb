@@ -322,34 +322,12 @@ describe "Admin settings", :admin do
     end
   end
 
-  describe "Machine learning settings" do
-    scenario "show the machine learning feature but not its settings" do
-      Setting["feature.machine_learning"] = true
-
-      visit admin_settings_path
-
-      expect(page).not_to have_content "Machine Learning"
-      expect(page).not_to have_content "Comments Summary"
-      expect(page).not_to have_content "Related Content"
-      expect(page).not_to have_content "Tags"
-      expect(page).not_to have_css ".translation_missing"
-
-      click_link "Features"
-
-      expect(page).to have_content "Machine Learning"
-      expect(page).not_to have_content "Comments Summary"
-      expect(page).not_to have_content "Related Content"
-      expect(page).not_to have_content "Tags"
-      expect(page).not_to have_css ".translation_missing"
-    end
-  end
-
   describe "LLM settings" do
     context "Required LLM setup is configured" do
       before do
         allow(Llm::Config)
           .to receive(:providers).and_return({ OpenAI: { enabled: true }})
-        ruby_llm_models = [double(name: "GPT-4.1 mini", id: "gpt-4o-mini")]
+        ruby_llm_models = [double(name: "GPT-4.1 mini", id: "gpt-4o-mini", created_at: Time.current)]
         allow(RubyLLM.models).to receive(:by_provider).with(:openai).and_return(ruby_llm_models)
         stub_secrets(pexels_access_key: "test_key")
       end

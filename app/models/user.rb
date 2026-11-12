@@ -95,7 +95,7 @@ class User < ApplicationRecord
 
   validates_associated :organization, message: false
 
-  normalizes :document_number, with: ->(document_number) { document_number.gsub(/[^a-z0-9]+/i, "").upcase }
+  normalizes :document_number, with: DocumentNumberNormalizer
 
   accepts_nested_attributes_for :organization, update_only: true
 
@@ -311,17 +311,30 @@ class User < ApplicationRecord
       poll_voter.delete
     end
 
-    Budget::Ballot.where(user_id: other_user.id).update_all(user_id: id)
-
     with_lock do
-      Vote.where(voter_id: other_user.id, voter_type: "User").find_each do |vote|
-        votable = vote.votable
-        if Vote.where(voter_id: id, voter_type: "User", votable: votable).any?
-          vote.delete
-          votable&.update_cached_votes
+      Budget::Ballot.where(user_id: other_user.id).find_each do |other_user_ballot|
+        user_ballots = Budget::Ballot.where(user_id: id, budget: other_user_ballot.budget)
+        user_ballot = user_ballots.find { |ballot| ballot.lines.any? } || user_ballots.first
+
+        if user_ballot
+          if user_ballot.lines.any?
+            other_user_ballot.destroy!
+          else
+            user_ballot.delete
+            other_user_ballot.update_column(:user_id, id)
+          end
         else
-          vote.update_column(:voter_id, id)
+          other_user_ballot.update_column(:user_id, id)
         end
+      end
+    end
+
+    Vote.where(voter_id: other_user.id, voter_type: "User").find_each do |vote|
+      transaction(requires_new: true) { vote.update_column(:voter_id, id) }
+    rescue ActiveRecord::RecordNotUnique
+      transaction do
+        vote.delete
+        vote.votable&.update_cached_votes
       end
     end
 

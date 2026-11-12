@@ -2,7 +2,7 @@ source "https://rubygems.org"
 
 ruby file: ".ruby-version"
 
-gem "rails", "~> 8.0.5.1"
+gem "rails", "~> 8.1.4.1"
 
 gem "acts-as-taggable-on", "~> 13.0.0"
 gem "acts_as_votable", "~> 0.14.0"
@@ -98,6 +98,7 @@ group :development do
   gem "capistrano3-puma", "~> 7.1.0"
   gem "erb_lint", "~> 0.9.0", require: false
   gem "faraday-retry", "~> 2.4.0", require: false
+  gem "herb", "~> 0.11.1", require: false
   gem "htmlbeautifier", "~> 1.4.3", require: false
   gem "mdl", "~> 0.18.1", require: false
   gem "pronto", "~> 0.11.5", require: false

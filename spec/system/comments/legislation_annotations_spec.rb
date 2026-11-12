@@ -44,11 +44,11 @@ describe "Commenting legislation annotations" do
     end
 
     scenario "Reply on a single annotation thread and display it in the merged annotation thread" do
-      within(".comment-box #annotation-#{annotation1.id}-comments") do
+      within(".comment-box #annotation-#{comment1.id}-comments") do
         first(:link, "0 replies").click
       end
 
-      click_link "Reply"
+      click_button "Reply"
 
       within "#js-comment-form-comment_#{comment1.id}" do
         fill_in "Leave your comment", with: "replying in single annotation thread"
@@ -81,7 +81,7 @@ describe "Commenting legislation annotations" do
       click_link "2 comment"
 
       within("#comment_#{comment2.id}") do
-        click_link "Reply"
+        click_button "Reply"
       end
 
       within "#js-comment-form-comment_#{comment2.id}" do
@@ -98,7 +98,7 @@ describe "Commenting legislation annotations" do
       expect(page).to have_css ".annotator-hl"
       first(:css, ".annotator-hl").click
 
-      within(".comment-box #annotation-#{annotation2.id}-comments") do
+      within(".comment-box #annotation-#{comment2.id}-comments") do
         first(:link, "1 reply").click
       end
 

@@ -18,8 +18,8 @@ class Proposal < ApplicationRecord
   include Milestoneable
   include Randomizable
   include SDG::Relatable
+  include Votable
 
-  acts_as_votable
   acts_as_paranoid column: :hidden_at
   include ActsAsParanoidAliases
 
@@ -40,7 +40,6 @@ class Proposal < ApplicationRecord
   has_many :dashboard_executed_actions, dependent: :destroy, class_name: "Dashboard::ExecutedAction"
   has_many :dashboard_actions, through: :dashboard_executed_actions, class_name: "Dashboard::Action"
   has_many :polls, as: :related, inverse_of: :related
-  has_one :summary_comment, as: :commentable, class_name: "MlSummaryComment", dependent: :destroy
 
   validates_translation :title, presence: true, length: { in: 4..Proposal.title_max_length }
   validates_translation :description, length: { maximum: Proposal.description_max_length }
@@ -183,7 +182,7 @@ class Proposal < ApplicationRecord
 
   def register_vote(user, vote_value)
     if votable_by?(user) && !archived?
-      user.with_lock { vote_by(voter: user, vote: vote_value) }
+      vote_by(voter: user, vote: vote_value)
     end
   end
 
