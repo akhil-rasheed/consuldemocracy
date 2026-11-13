@@ -35,9 +35,17 @@ env:
     DB_HOST: <%= ENV.fetch("DB_HOST") %>
     PGUSER: <%= ENV.fetch("PGUSER") %>
     PGDATABASE: <%= ENV.fetch("PGDATABASE") %>
+    MAILER_DELIVERY_METHOD: smtp
+    SMTP_ADDRESS: <%= ENV.fetch("SMTP_ADDRESS") %>
+    SMTP_PORT: <%= ENV.fetch("SMTP_PORT", "587") %>
+    SMTP_DOMAIN: <%= ENV.fetch("SMTP_DOMAIN") %>
+    SMTP_AUTHENTICATION: plain
+    SMTP_ENABLE_STARTTLS_AUTO: "true"
   secret:
     - SECRET_KEY_BASE
     - PGPASSWORD
+    - SMTP_USERNAME
+    - SMTP_PASSWORD
 
 volumes:
   - "<%= ENV.fetch("STORAGE_VOLUME") %>:/var/www/consul/storage"
