@@ -1,25 +1,27 @@
-service: consul-demo
-image: akhilrasheed/consuldemo
+service: consul-democracy
+image: <%= ENV.fetch("KAMAL_IMAGE") %>
+
 ssh:
-  user: ubuntu
+  user: <%= ENV.fetch("DEPLOY_USER") %>
   keys:
-    - ~/.ssh/ssh-key-2026-10-23.key
+    - <%= ENV.fetch("DEPLOY_SSH_KEY") %>
+
 servers:
   web:
-    - 130.162.44.206
+    - <%= ENV.fetch("DEPLOY_HOST") %>
 
 registry:
-  username: akhilrasheed
+  username: <%= ENV.fetch("KAMAL_REGISTRY_USERNAME") %>
   password:
     - KAMAL_REGISTRY_PASSWORD
 
 builder:
-  arch: arm64
+  arch: <%= ENV.fetch("DOCKER_ARCH", "arm64") %>
   dockerfile: Dockerfile.production
   context: .
 
 proxy:
-  host: consuldemo.akhilrasheed.com
+  host: <%= ENV.fetch("APP_HOST") %>
   ssl: true
   app_port: 3000
   forward_headers: true
@@ -29,24 +31,28 @@ env:
     RAILS_ENV: production
     RACK_ENV: production
     RAILS_SERVE_STATIC_FILES: "true"
-    DB_HOST: consul-demo-db
-    PGUSER: consul
-    PGDATABASE: consul_development
+    RAILS_LOG_TO_STDOUT: "true"
+    DB_HOST: <%= ENV.fetch("DB_HOST") %>
+    PGUSER: <%= ENV.fetch("PGUSER") %>
+    PGDATABASE: <%= ENV.fetch("PGDATABASE") %>
   secret:
     - SECRET_KEY_BASE
     - PGPASSWORD
 
+volumes:
+  - "<%= ENV.fetch("STORAGE_VOLUME") %>:/var/www/consul/storage"
+
 accessories:
   db:
-    image: postgres:16
-    host: 130.162.44.206
+    image: postgres:<%= ENV.fetch("POSTGRES_VERSION", "16") %>
+    host: <%= ENV.fetch("DEPLOY_HOST") %>
     env:
       clear:
-        POSTGRES_USER: consul
-        POSTGRES_DB: consul_production
+        POSTGRES_USER: <%= ENV.fetch("POSTGRES_USER") %>
+        POSTGRES_DB: <%= ENV.fetch("POSTGRES_DB") %>
       secret:
         - POSTGRES_PASSWORD
     directories:
-      - consul_postgres_data:/var/lib/postgresql/data
+      - <%= ENV.fetch("POSTGRES_VOLUME") %>:/var/lib/postgresql/data
     options:
       restart: unless-stopped
