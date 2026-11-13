@@ -54,6 +54,8 @@ accessories:
         - POSTGRES_PASSWORD
     directories:
       - <%= ENV.fetch("POSTGRES_VOLUME") %>:/var/lib/postgresql/data
+    files:
+      - db/bootstrap.sql:/docker-entrypoint-initdb.d/01-bootstrap.sql
     options:
       restart: unless-stopped
   memcached:
