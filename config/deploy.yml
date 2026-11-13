@@ -56,3 +56,15 @@ accessories:
       - <%= ENV.fetch("POSTGRES_VOLUME") %>:/var/lib/postgresql/data
     options:
       restart: unless-stopped
+  memcached:
+    image: memcached:1.6-alpine
+    host: <%= ENV.fetch("KAMAL_HOST") %>
+    cmd: >-
+      memcached
+      -p <%= ENV.fetch("MEMCACHED_PORT", "11211") %>
+      -m <%= ENV.fetch("MEMCACHED_MEMORY_LIMIT", "64") %>
+      -c <%= ENV.fetch("MEMCACHED_CONNECTIONS", "1024") %>
+      -l 0.0.0.0
+      -U 0
+    options:
+      restart: unless-stopped
